@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CompanyName.MyMeetings.BuildingBlocks.Application.Data;
 using CompanyName.MyMeetings.BuildingBlocks.Infrastructure;
 using CompanyName.MyMeetings.Modules.Meetings.Application.Configuration.Commands;
 using Dapper;
@@ -47,7 +48,7 @@ namespace CompanyName.MyMeetings.Modules.Meetings.Infrastructure.Configuration.P
 
                 try
                 {
-                    await _mediator.Publish((INotification) request, cancellationToken);
+                    await _mediator.Publish((INotification)request, cancellationToken);
                 }
                 catch (Exception e)
                 {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroupProposals;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.MeetingGroups;
 using CompanyName.MyMeetings.Modules.Meetings.Domain.Meetings;
@@ -18,9 +19,11 @@ namespace CompanyName.MyMeetings.Modules.Meetings.Domain.UnitTests.Meetings
 
             internal Term RvspTerm { get; set; }
 
-            internal int GuestsLimit{ get; set; }
+            internal int GuestsLimit { get; set; }
 
             internal int? AttendeesLimit { get; set; }
+
+            internal IEnumerable<MemberId> Attendees { get; set; } = Enumerable.Empty<MemberId>();
         }
 
         protected class MeetingTestData
@@ -40,20 +43,23 @@ namespace CompanyName.MyMeetings.Modules.Meetings.Domain.UnitTests.Meetings
         {
             var proposalMemberId = options.CreatorId ?? new MemberId(Guid.NewGuid());
             var meetingProposal = MeetingGroupProposal.ProposeNew(
-                "name", "description",
-                MeetingGroupLocation.CreateNew("Warsaw", "PL"), proposalMemberId);
+                "name",
+                "description",
+                MeetingGroupLocation.CreateNew("Warsaw", "PL"),
+                proposalMemberId);
 
             meetingProposal.Accept();
 
             var meetingGroup = meetingProposal.CreateMeetingGroup();
 
-            meetingGroup.UpdatePaymentInfo(DateTime.Now.AddDays(1));
+            meetingGroup.SetExpirationDate(DateTime.Now.AddDays(1));
 
             var meetingTerm = options.MeetingTerm ??
                               MeetingTerm.CreateNewBetweenDates(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2));
 
             var rsvpTerm = options.RvspTerm ?? Term.NoTerm;
-            var meeting = meetingGroup.CreateMeeting("title",
+            var meeting = meetingGroup.CreateMeeting(
+                "title",
                 meetingTerm,
                 "description",
                 MeetingLocation.CreateNew("Name", "Address", "PostalCode", "City"),
@@ -63,6 +69,12 @@ namespace CompanyName.MyMeetings.Modules.Meetings.Domain.UnitTests.Meetings
                 MoneyValue.Undefined,
                 new List<MemberId>(),
                 proposalMemberId);
+
+            foreach (var attendee in options.Attendees)
+            {
+                meetingGroup.JoinToGroupMember(attendee);
+                meeting.AddAttendee(meetingGroup, attendee, 0);
+            }
 
             DomainEventsTestHelper.ClearAllDomainEvents(meetingGroup);
 
